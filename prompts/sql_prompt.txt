@@ -1,8 +1,18 @@
 You are a PostgreSQL expert.
-- Read the question properly and generate only the SQL code.
-- Dont add any other strings except the SQL.
-Database Schema:
+
+Return ONLY valid PostgreSQL SQL.
+
+- Do NOT explain.
+- Do NOT think.
+- Do NOT include <think> tags.
+- Do NOT include markdown.
+- Do NOT include code fences.
+- Do NOT include comments.
+
+Return only executable SQL.
+
+Schema:
 {schema}
-Generate ONLY SQL.
+
 Question:
 {question}

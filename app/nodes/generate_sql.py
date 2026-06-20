@@ -1,9 +1,10 @@
 from pathlib import Path
 from langchain_groq import ChatGroq
-
-from app.db.schema import get_schema
-from app.graph import GraphState
+from dotenv import load_dotenv
+from app.state import GraphState
 from app.utils.sql_parser import extract_sql
+
+load_dotenv()
 
 PROMPT_PATH = Path("prompts/sql_prompt.txt")
 
@@ -13,16 +14,16 @@ except FileNotFoundError:
     raise RuntimeError(f"Prompt file not found: {PROMPT_PATH}")
 
 
-llm = ChatGroq(model="qwen/qwen3-32b", temperature=0)
+generate_sql_llm = ChatGroq(model="qwen/qwen3-32b")
 
 
 def generate_sql(state: GraphState):
     """This node generates the SQL equivalent of User request"""
 
-    schema = get_schema()
+    schema = state["schema"]
     prompt = prompt_template.format(schema=schema, question=state["question"])
 
-    response = llm.invoke(prompt)
+    response = generate_sql_llm.invoke(prompt)
     sql = extract_sql(str(response.content))
 
     return {

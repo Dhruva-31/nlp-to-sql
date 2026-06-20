@@ -1,16 +1,32 @@
-from app.graph import GraphState, graph
+from app.graph import graph
+from app.state import GraphState
 
-question = input("Ask a question: ")
+config = {"configurable": {"thread_id": "user-1"}}
 
-state: GraphState = {
-    "question": question,
-    "final_answer": "",
-    "result": [],
-    "schema": "",
-    "sql_query": "",
-}
+while True:
 
-response = graph.invoke(state)
+    question = input("\nAsk a question (or 'exit'): ")
 
-print()
-print(response["final_answer"])
+    if question.lower() in {"exit", "quit"}:
+        print("Goodbye!")
+        break
+
+    state: GraphState = {
+        "question": question,
+        "final_answer": "",
+        "result": [],
+        "schema": "",
+        "sql_query": "",
+        "is_valid": True,
+        "validation_error": "",
+        "execution_time": 0.0,
+    }
+
+    try:
+        response = graph.invoke(state, config=config)
+
+        print()
+        print(response["final_answer"])
+
+    except Exception as e:
+        print(f"\nError: {e}")

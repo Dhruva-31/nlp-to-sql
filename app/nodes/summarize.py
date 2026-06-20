@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from langchain_groq import ChatGroq
-from app.graph import GraphState
+from app.state import GraphState
 from app.utils.clean_response import remove_thinking
 
 PROMPT_PATH = Path("prompts/summarize_prompt.txt")
@@ -11,13 +11,17 @@ try:
 except FileNotFoundError:
     raise RuntimeError(f"Prompt file not found: {PROMPT_PATH}")
 
-llm = ChatGroq(model="qwen/qwen3-32b", temperature=0)
+summary_llm = ChatGroq(model="llama-3.3-70b-versatile")
 
 
 def summarize(state: GraphState):
     """This node summarizes the SQL result"""
 
-    response = llm.invoke(prompt_template)
+    prompt = prompt_template.format(
+        question=state["question"],
+        result=state["result"],
+    )
+    response = summary_llm.invoke(prompt)
     answer = remove_thinking(str(response.content))
 
     return {"final_answer": answer}
