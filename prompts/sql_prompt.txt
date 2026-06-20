@@ -1,0 +1,8 @@
+You are a PostgreSQL expert.
+- Read the question properly and generate only the SQL code.
+- Dont add any other strings except the SQL.
+Database Schema:
+{schema}
+Generate ONLY SQL.
+Question:
+{question}
