@@ -2,38 +2,25 @@ from app.state import GraphState
 
 
 def validate_sql(state: GraphState):
+    """This node checks if the sql exists or not"""
 
-    sql_query = state["sql_query"]
+    sql = state["sql_query"]
 
-    if not sql_query:
-        return {
-            "validation_error": "Empty SQL query.",
-            "is_valid": False,
-        }
+    if not sql or not sql.strip():
+        return {"is_valid": False, "error": "Generated SQL is empty."}
 
-    sql_query = sql_query.upper()
+    sql = sql.strip().upper()
 
-    BLOCKED = {
-        "DROP",
-        "DELETE",
-        "UPDATE",
-        "ALTER",
-        "TRUNCATE",
-        "INSERT",
-    }
+    if not (
+        sql.startswith("SELECT")
+        or sql.startswith("WITH")
+        or sql.startswith("INSERT")
+        or sql.startswith("UPDATE")
+        or sql.startswith("DELETE")
+        or sql.startswith("DROP")
+        or sql.startswith("ALTER")
+        or sql.startswith("TRUNCATE")
+    ):
+        return {"is_valid": False, "error": "Generated output is not SQL."}
 
-    sql_words = sql_query.replace(";", " ").split()
-
-    for block in BLOCKED:
-
-        if block in sql_words:
-
-            return {
-                "validation_error": f"Query contains blocked operation: {block}",
-                "is_valid": False,
-            }
-
-    return {
-        "validation_error": "",
-        "is_valid": True,
-    }
+    return {"is_valid": True, "error": ""}

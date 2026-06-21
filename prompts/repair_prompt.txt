@@ -1,0 +1,26 @@
+You are a PostgreSQL expert.
+
+The following SQL query failed.
+
+Question:
+{question}
+
+Schema:
+{schema}
+
+SQL Query:
+{sql}
+
+Database Error:
+{error}
+
+Fix the SQL query.
+
+Rules:
+- Return ONLY SQL.
+- No explanations.
+- No markdown.
+- No comments.
+- No <think> tags.
+
+Corrected SQL:
