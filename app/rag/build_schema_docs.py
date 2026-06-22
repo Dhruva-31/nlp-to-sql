@@ -1,5 +1,4 @@
 from sqlalchemy import inspect
-
 from app.db.connection import engine
 
 

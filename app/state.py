@@ -1,20 +1,8 @@
-from typing import TypedDict
+from typing import Annotated, TypedDict
+from langchain_core.messages import AnyMessage
+from langgraph.graph.message import add_messages
 
 
 class GraphState(TypedDict):
-    question: str
-    schema: str
-    sql_query: str
-
-    result: list
-    final_answer: str
-
-    execution_time: float
-
-    is_valid: bool
-
-    error: str
+    messages: Annotated[list[AnyMessage], add_messages]
     retry_count: int
-
-    risk_level: str
-    approved: bool

@@ -1,7 +1,7 @@
+from langchain_core.messages import HumanMessage
 from langgraph.types import Command
 
 from app.graph import graph
-from app.rag.build_index import build_index
 from app.state import GraphState
 
 config = {"configurable": {"thread_id": "user-1"}}
@@ -15,21 +15,13 @@ while True:
         break
 
     state: GraphState = {
-        "question": question,
-        "final_answer": "",
-        "result": [],
-        "schema": "",
-        "sql_query": "",
-        "is_valid": True,
-        "execution_time": 0.0,
-        "error": "",
+        "messages": [HumanMessage(content=question)],
         "retry_count": 0,
-        "approved": False,
-        "risk_level": "SAFE",
     }
 
     try:
         response = graph.invoke(state, config=config)
+
         if "__interrupt__" in response:
 
             interrupt_data = response["__interrupt__"][0].value
@@ -42,13 +34,13 @@ while True:
 
             approved = user_choice == "y"
 
-            result = graph.invoke(
+            response = graph.invoke(
                 Command(resume=approved),
                 config=config,
             )
 
         print()
-        print(response["final_answer"])
+        print(response["messages"][-1].content)
 
     except Exception as e:
         print(f"\nError: {e}")

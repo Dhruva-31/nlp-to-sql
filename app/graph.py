@@ -1,114 +1,65 @@
-from langgraph.graph import StateGraph
-from langgraph.graph import START
-from langgraph.graph import END
-from app.nodes.human_approval import human_approval
-from app.nodes.repair_sql import repair_sql
-from app.nodes.risk_check_sql import risk_check
-from app.nodes.schema_retriever import schema_retriever
-from app.nodes.validate_sql import validate_sql
-from app.nodes.generate_sql import generate_sql
-from app.nodes.execute_sql import execute_sql
-from app.nodes.summarize import summarize
-from app.nodes.reject import rejection
-from app.state import GraphState
+from typing import Literal
 from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.graph import END, START, StateGraph
+from app.nodes.agent import agent
+from app.nodes.human_approval import human_approval
+from app.nodes.tools import tools
+from app.risk import classify_risk
+from app.state import GraphState
+
+MAX_RETRIES = 3
 
 
-def route_validation(state: GraphState):
+def route_after_agent(
+    state: GraphState,
+) -> Literal["tools", "human_approval", "__end__"]:
+    """
+    Replaces route_validation + route_risk + the success/failed branch
+    of route_execution, combined into one routing function since
+    validate_sql and risk_check are no longer separate nodes.
+    """
+    last = state["messages"][-1]
 
-    if state["is_valid"]:
-        return "valid"
+    if not getattr(last, "tool_calls", None):
+        return "__end__"
 
-    return "invalid"
+    call = last.tool_calls[0]
 
+    if call["name"] == "answer_schema_question":
+        return "tools"
 
-def route_execution(state: GraphState):
+    if call["name"] == "execute_sql_query":
 
-    if state["error"] and state["retry_count"] < 3:
-        return "repair"
+        if state.get("retry_count", 0) >= MAX_RETRIES:
+            return "__end__"
 
-    if state["error"]:
-        return "failed"
+        sql = call["args"].get("sql", "")
+        risk_level = classify_risk(sql)
+        if risk_level in {"HIGH", "CRITICAL"}:
+            return "human_approval"
+        return "tools"
 
-    return "success"
-
-
-def route_risk(state):
-
-    risk = state["risk_level"]
-
-    if risk in {"HIGH", "CRITICAL"}:
-        return "approval"
-
-    return "safe"
-
-
-def route_approval(state: GraphState):
-
-    if state["approved"]:
-        return "execute"
-
-    return "rejected"
+    return "tools"
 
 
 builder = StateGraph(GraphState)
 
-builder.add_node("retrieve_schema", schema_retriever)
-
-builder.add_node("generate_sql", generate_sql)
-
-builder.add_node("execute_sql", execute_sql)
-
-builder.add_node("validate_sql", validate_sql)
-
-builder.add_node("summarize", summarize)
-
-builder.add_node("repair_sql", repair_sql)
-
-builder.add_node("risk_check", risk_check)
-
+builder.add_node("agent", agent)
+builder.add_node("tools", tools)
 builder.add_node("human_approval", human_approval)
 
-builder.add_node("reject", rejection)
-
-builder.add_edge(START, "retrieve_schema")
-
-builder.add_edge("retrieve_schema", "generate_sql")
-
-builder.add_edge("generate_sql", "validate_sql")
+builder.add_edge(START, "agent")
 
 builder.add_conditional_edges(
-    "validate_sql",
-    route_validation,
-    {"valid": "risk_check", "invalid": "reject"},
+    "agent",
+    route_after_agent,
+    {"tools": "tools", "human_approval": "human_approval", "__end__": END},
 )
 
-builder.add_conditional_edges(
-    "risk_check",
-    route_risk,
-    {"approval": "human_approval", "safe": "execute_sql"},
-)
-
-builder.add_conditional_edges(
-    "human_approval",
-    route_approval,
-    {"execute": "execute_sql", "rejected": "reject"},
-)
-
-builder.add_conditional_edges(
-    "execute_sql",
-    route_execution,
-    {"success": "summarize", "repair": "repair_sql", "failed": "reject"},
-)
-
-builder.add_edge("repair_sql", "execute_sql")
-
-builder.add_edge("summarize", END)
-
-builder.add_edge("reject", END)
+builder.add_edge("tools", "agent")
 
 memory = InMemorySaver()
-
 graph = builder.compile(checkpointer=memory)
+
 with open("graph.png", "wb") as f:
     f.write(graph.get_graph().draw_mermaid_png())

@@ -1,5 +1,6 @@
 from langchain_chroma import Chroma
 from langchain_community.embeddings import FastEmbedEmbeddings
+from app.rag.config import SCHEMA_DB_PATH
 
 embeddings = FastEmbedEmbeddings()
 
@@ -7,7 +8,7 @@ embeddings = FastEmbedEmbeddings()
 def retrieve_schema(question: str):
 
     vectorstore = Chroma(
-        persist_directory="./schema_db",
+        persist_directory=SCHEMA_DB_PATH,
         embedding_function=embeddings,
     )
 

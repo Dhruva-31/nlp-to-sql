@@ -1,8 +1,9 @@
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 import os
+from pathlib import Path
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 DATABASE_URL = (
     f"postgresql+psycopg2://"
