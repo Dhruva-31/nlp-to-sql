@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: postgres-db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: dhruva
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: nlp_sql_db
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dhruva -d nlp_sql_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  seed:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    env_file:
+      - .env
+
+    command: python -m app.db.seed
+
+  app:
+    build: .
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      seed:
+        condition: service_completed_successfully
+
+    env_file:
+      - .env
+
+    ports:
+      - "8501:8501"
+
+volumes:
+  postgres_data:

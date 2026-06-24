@@ -1,0 +1,24 @@
+# Ignore everything not needed in container
+
+.venv/
+__pycache__/
+*.pyc
+
+.env
+.env.*
+
+logs/
+*.log
+
+.vscode/
+.idea/
+
+.pytest_cache/
+.mypy_cache/
+
+.git/
+.gitignore
+
+graph.png
+
+app/**/__pycache__/

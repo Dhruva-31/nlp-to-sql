@@ -1,17 +1,9 @@
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 import os
-from pathlib import Path
 
-load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
+load_dotenv()
 
-DATABASE_URL = (
-    f"postgresql+psycopg2://"
-    f"{os.getenv('DB_USER')}:"
-    f"{os.getenv('DB_PASSWORD')}@"
-    f"{os.getenv('DB_HOST')}:"
-    f"{os.getenv('DB_PORT')}/"
-    f"{os.getenv('DB_NAME')}"
-)
+DATABASE_URL = str(os.getenv("DATABASE_URL"))
 
 engine = create_engine(DATABASE_URL)

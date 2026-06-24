@@ -1,7 +1,7 @@
 from faker import Faker
 from sqlalchemy import text
 
-from connection import engine
+from app.db.connection import engine
 
 import random
 
@@ -34,15 +34,82 @@ categories = [
 ]
 
 
+def create_tables():
+
+    with engine.begin() as conn:
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS customers (
+                customer_id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                city VARCHAR(100) NOT NULL,
+                signup_date DATE NOT NULL
+            )
+        """))
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS products (
+                product_id SERIAL PRIMARY KEY,
+                product_name VARCHAR(255) NOT NULL,
+                category VARCHAR(100) NOT NULL,
+                price NUMERIC(10,2) NOT NULL
+            )
+        """))
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS orders (
+                order_id SERIAL PRIMARY KEY,
+                customer_id INTEGER NOT NULL,
+                order_date DATE NOT NULL,
+                total_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+                CONSTRAINT fk_orders_customer
+                    FOREIGN KEY (customer_id)
+                    REFERENCES customers(customer_id)
+                    ON DELETE CASCADE
+            )
+        """))
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS order_items (
+                order_item_id SERIAL PRIMARY KEY,
+                order_id INTEGER NOT NULL,
+                product_id INTEGER NOT NULL,
+                quantity INTEGER NOT NULL,
+                CONSTRAINT fk_order_items_order
+                    FOREIGN KEY (order_id)
+                    REFERENCES orders(order_id)
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_order_items_product
+                    FOREIGN KEY (product_id)
+                    REFERENCES products(product_id)
+            )
+        """))
+
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS payments (
+                payment_id SERIAL PRIMARY KEY,
+                order_id INTEGER NOT NULL,
+                payment_method VARCHAR(50) NOT NULL,
+                amount NUMERIC(12,2) NOT NULL,
+                CONSTRAINT fk_payments_order
+                    FOREIGN KEY (order_id)
+                    REFERENCES orders(order_id)
+                    ON DELETE CASCADE
+            )
+        """))
+
+    print("Tables created")
+
+
 def clear_tables():
 
     with engine.begin() as conn:
 
-        conn.execute(text("TRUNCATE TABLE payments RESTART IDENTITY CASCADE"))
-        conn.execute(text("TRUNCATE TABLE order_items RESTART IDENTITY CASCADE"))
-        conn.execute(text("TRUNCATE TABLE orders RESTART IDENTITY CASCADE"))
-        conn.execute(text("TRUNCATE TABLE products RESTART IDENTITY CASCADE"))
-        conn.execute(text("TRUNCATE TABLE customers RESTART IDENTITY CASCADE"))
+        conn.execute(
+            text(
+                "TRUNCATE TABLE payments, order_items, orders, products, customers RESTART IDENTITY CASCADE"
+            )
+        )
 
     print("Tables cleared")
 
@@ -259,6 +326,8 @@ def seed_orders():
 
 
 if __name__ == "__main__":
+
+    create_tables()
 
     clear_tables()
 

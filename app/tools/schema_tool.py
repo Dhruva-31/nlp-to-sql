@@ -1,14 +1,6 @@
 import re
 from langchain_core.tools import tool
-from app.rag.build_schema_docs import build_schema_docs
-from app.rag.retriever import retrieve_schema
-
-BROAD_SCHEMA_RE = re.compile(
-    r"\b(all tables?|every table|how many tables|list (the )?tables|overview)\b"
-    r"|\bschema\b.*\b(explain|describe|summarize|overview|all|every|whole|entire|full|brief)\b"
-    r"|\b(explain|describe|summarize|overview|all|every|whole|entire|full|brief)\b.*\bschema\b",
-    re.IGNORECASE,
-)
+from app.db.build_schema_docs import build_schema_docs
 
 
 @tool
@@ -26,7 +18,4 @@ def answer_schema_question(question: str) -> str:
         question: The user's question, verbatim or paraphrased -- used
             to retrieve the most relevant schema chunks.
     """
-    # if BROAD_SCHEMA_RE.search(question):
     return "\n\n".join(build_schema_docs())
-
-    # return retrieve_schema(question)

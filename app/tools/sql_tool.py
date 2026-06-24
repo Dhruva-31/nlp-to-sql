@@ -3,7 +3,6 @@ import time
 from langchain_core.tools import tool
 from sqlalchemy import text
 from app.db.connection import engine
-from app.rag.build_index import build_index
 from app.utils.logger import log_query
 
 DDL_COMMANDS = {
@@ -75,11 +74,6 @@ def execute_sql_query(sql: str, question: str, schema_context: str) -> str:
             }
         )
         return f"Error executing query: {e}"
-
-    first_word = sql.strip().upper().split()[0]
-
-    if first_word in DDL_COMMANDS:
-        build_index()
 
     execution_time = time.perf_counter() - start_time
 
