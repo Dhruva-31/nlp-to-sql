@@ -337,6 +337,18 @@ def database_already_seeded():
         return result.scalar_one() > 0
 
 
+def initialize_database():
+
+    create_tables()
+
+    if not database_already_seeded():
+
+        seed_customers()
+        seed_products()
+        seed_orders()
+        print("\nDatabase seeded successfully")
+
+
 if __name__ == "__main__":
 
     create_tables()

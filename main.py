@@ -2,6 +2,9 @@ import uuid
 import streamlit as st
 from langchain_core.messages import HumanMessage
 from langgraph.types import Command
+from app.db.seed import initialize_database
+
+initialize_database()
 
 st.set_page_config(page_title="NLP → SQL", layout="wide")
 
