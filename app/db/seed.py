@@ -325,16 +325,32 @@ def seed_orders():
     print(f"{NUM_ORDERS} orders inserted")
 
 
+def database_already_seeded():
+
+    with engine.begin() as conn:
+
+        result = conn.execute(text("""
+                SELECT COUNT(*)
+                FROM customers
+                """))
+
+        return result.scalar_one() > 0
+
+
 if __name__ == "__main__":
 
     create_tables()
 
-    clear_tables()
+    if database_already_seeded():
 
-    seed_customers()
+        print("Database already seeded. Skipping.")
 
-    seed_products()
+    else:
 
-    seed_orders()
+        seed_customers()
 
-    print("\nDatabase seeded successfully")
+        seed_products()
+
+        seed_orders()
+
+        print("\nDatabase seeded successfully")
